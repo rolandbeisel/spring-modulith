@@ -21,27 +21,37 @@ import org.jobrunr.scheduling.JobScheduler;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.AutoConfigureAfter;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.modulith.events.EventExternalizationConfiguration;
 import org.springframework.modulith.events.ExternalizationMode;
+import org.springframework.modulith.events.OutboxEventScheduler;
 import org.springframework.modulith.events.config.EventExternalizationAutoConfiguration;
+import org.springframework.modulith.events.config.OutboxEventRecorderAutoConfiguration;
 
 /**
  * Auto-configuration to set up event externalization via JobRunr.
  *
  * @author Oliver Drotbohm
  * @since 2.1
+ * @deprecated since 2.2, for removal. Provide an {@link OutboxEventScheduler} bean through a JobRunr-owned extension.
  */
+@Deprecated(since = "2.2", forRemoval = true)
 @AutoConfiguration
-@AutoConfigureAfter(EventExternalizationAutoConfiguration.class)
+@AutoConfigureAfter({ EventExternalizationAutoConfiguration.class, OutboxEventRecorderAutoConfiguration.class })
 @ConditionalOnProperty(name = ExternalizationMode.PROPERTY, havingValue = "outbox")
 @ConditionalOnProperty(name = "spring.modulith.events.externalization.enabled",
 		havingValue = "true",
 		matchIfMissing = true)
 @ConditionalOnBean(JobScheduler.class)
+@ConditionalOnMissingBean(OutboxEventScheduler.class)
 class JobRunrEventExternalizationAutoConfiguration {
 
+	/**
+	 * @deprecated since 2.2, for removal. Provide an {@link OutboxEventScheduler} bean instead.
+	 */
+	@Deprecated(since = "2.2", forRemoval = true)
 	@Bean
 	JobRunrEventExternalizer jobRunrEventExternalizer(JobScheduler scheduler,
 			List<JobRunrExternalizationTransport> transports, EventExternalizationConfiguration configuration) {

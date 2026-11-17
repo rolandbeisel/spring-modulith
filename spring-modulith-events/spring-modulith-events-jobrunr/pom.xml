@@ -6,7 +6,8 @@
 		<version>2.2.0-SNAPSHOT</version>
 	</parent>
 	<artifactId>spring-modulith-events-jobrunr</artifactId>
-	<name>Spring Modulith - Events - JobRunr</name>
+	<name>Spring Modulith - Events - JobRunr (Deprecated)</name>
+	<description>Deprecated since 2.2, for future removal. Legacy JobRunr integration retained for compatibility. Integrations should be provided by external extensions using OutboxEventScheduler and OutboxEventExternalizer.</description>
 
 	<properties>
 		<module.name>spring.modulith.events.jobrunr</module.name>

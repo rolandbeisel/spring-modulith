@@ -36,7 +36,10 @@ import org.springframework.util.Assert;
  * @since 2.1
  * @see Outbox
  * @see EventExternalizationConfiguration
+ * @deprecated since 2.2, for removal. Implement
+ *             {@link org.springframework.modulith.events.OutboxEventScheduler} in a Namastack-owned extension instead.
  */
+@Deprecated(since = "2.2", forRemoval = true)
 class NamastackOutboxEventRecorder implements ApplicationListener<PayloadApplicationEvent<?>> {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(NamastackOutboxEventRecorder.class);
@@ -52,7 +55,11 @@ class NamastackOutboxEventRecorder implements ApplicationListener<PayloadApplica
 	 * @param configuration must not be {@literal null}.
 	 * @param outbox must not be {@literal null}.
 	 * @param context must not be {@literal null}.
+	 * @deprecated since 2.2, for removal. Use the generic
+	 *             {@link org.springframework.modulith.events.support.OutboxEventRecorder} with an
+	 *             {@link org.springframework.modulith.events.OutboxEventScheduler} instead.
 	 */
+	@Deprecated(since = "2.2", forRemoval = true)
 	NamastackOutboxEventRecorder(EventExternalizationConfiguration configuration, Outbox outbox,
 			EvaluationContext context) {
 
@@ -70,7 +77,10 @@ class NamastackOutboxEventRecorder implements ApplicationListener<PayloadApplica
 	 * within the current transaction.
 	 *
 	 * @param event the payload application event to process
+	 * @deprecated since 2.2, for removal. Scheduling is delegated to
+	 *             {@link org.springframework.modulith.events.OutboxEventScheduler} by the generic recorder.
 	 */
+	@Deprecated(since = "2.2", forRemoval = true)
 	@Override
 	public void onApplicationEvent(PayloadApplicationEvent<?> event) {
 

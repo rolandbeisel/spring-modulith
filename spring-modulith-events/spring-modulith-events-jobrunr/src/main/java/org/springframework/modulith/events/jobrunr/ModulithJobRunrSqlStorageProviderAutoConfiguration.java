@@ -57,7 +57,10 @@ import org.springframework.util.StringUtils;
  * @author Oliver Drotbohm
  * @since 2.1
  * @soundtrack Irma - Black Sun (Acoustic)
+ * @deprecated since 2.2, for removal. Spring transaction participation must be provided by a JobRunr-owned extension
+ *             or native JobRunr integration before this configuration can be replaced.
  */
+@Deprecated(since = "2.2", forRemoval = true)
 @AutoConfiguration(
 		after = DataSourceAutoConfiguration.class,
 		before = { JobRunrSqlStorageAutoConfiguration.class, JobRunrAutoConfiguration.class })
@@ -65,6 +68,10 @@ import org.springframework.util.StringUtils;
 @ConditionalOnProperty(prefix = "jobrunr.database", name = "type", havingValue = "sql", matchIfMissing = true)
 class ModulithJobRunrSqlStorageProviderAutoConfiguration {
 
+	/**
+	 * @deprecated since 2.2, for removal. Use transaction-aware storage supplied by the JobRunr-owned integration.
+	 */
+	@Deprecated(since = "2.2", forRemoval = true)
 	@Bean(name = "storageProvider", destroyMethod = "close")
 	@DependsOnDatabaseInitialization
 	@ConditionalOnMissingBean
@@ -107,14 +114,18 @@ class ModulithJobRunrSqlStorageProviderAutoConfiguration {
 	 * @author Oliver Drotbohm
 	 * @since 2.1
 	 * @soundtrack Irma - Black Sun (Acoustic)
+	 * @deprecated since 2.2, for removal. Transaction integration belongs to the JobRunr-owned extension.
 	 */
+	@Deprecated(since = "2.2", forRemoval = true)
 	private static class CommitSuppressingDataSourceProxy extends TransactionAwareDataSourceProxy {
 
 		/**
 		 * Creates a new {@link CommitSuppressingDataSourceProxy} for the given {@link DataSource}.
 		 *
 		 * @param targetDataSource must not be {@literal null}.
+		 * @deprecated since 2.2, for removal. Transaction integration belongs to the JobRunr-owned extension.
 		 */
+		@Deprecated(since = "2.2", forRemoval = true)
 		CommitSuppressingDataSourceProxy(DataSource targetDataSource) {
 
 			super(targetDataSource);
@@ -122,10 +133,11 @@ class ModulithJobRunrSqlStorageProviderAutoConfiguration {
 			Assert.notNull(targetDataSource, "DataSource must not be null!");
 		}
 
-		/*
-		 * (non-Javadoc)
+		/**
+		 * @deprecated since 2.2, for removal. Transaction integration belongs to the JobRunr-owned extension.
 		 * @see org.springframework.jdbc.datasource.TransactionAwareDataSourceProxy#getTransactionAwareConnectionProxy(javax.sql.DataSource)
 		 */
+		@Deprecated(since = "2.2", forRemoval = true)
 		@Override
 		protected Connection getTransactionAwareConnectionProxy(DataSource targetDataSource) {
 
@@ -144,7 +156,9 @@ class ModulithJobRunrSqlStorageProviderAutoConfiguration {
 		 * @author Oliver Drotbohm
 		 * @since 2.1
 		 * @soundtrack Irma - Black Sun (Acoustic)
+		 * @deprecated since 2.2, for removal. Transaction integration belongs to the JobRunr-owned extension.
 		 */
+		@Deprecated(since = "2.2", forRemoval = true)
 		private static class CommitSuppressingInvocationHandler implements InvocationHandler {
 
 			private static final Collection<String> SUPPRESSED_METHODS = Set.of("commit", "setAutoCommit");
@@ -152,10 +166,12 @@ class ModulithJobRunrSqlStorageProviderAutoConfiguration {
 			private final Connection connection;
 
 			/**
-			 * Creates a new {@link CommitSuppressingDataSource} for the given {@link Connection}.
+			 * Creates a new {@link CommitSuppressingInvocationHandler} for the given {@link Connection}.
 			 *
 			 * @param connection must not be {@literal null}.
+			 * @deprecated since 2.2, for removal. Transaction integration belongs to the JobRunr-owned extension.
 			 */
+			@Deprecated(since = "2.2", forRemoval = true)
 			CommitSuppressingInvocationHandler(Connection connection) {
 
 				Assert.notNull(connection, "Object must not be null!");
@@ -163,10 +179,11 @@ class ModulithJobRunrSqlStorageProviderAutoConfiguration {
 				this.connection = connection;
 			}
 
-			/*
-			 * (non-Javadoc)
+			/**
+			 * @deprecated since 2.2, for removal. Transaction integration belongs to the JobRunr-owned extension.
 			 * @see java.lang.reflect.InvocationHandler#invoke(java.lang.Object, java.lang.reflect.Method, java.lang.Object[])
 			 */
+			@Deprecated(since = "2.2", forRemoval = true)
 			@Override
 			public @Nullable Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
 

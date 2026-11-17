@@ -23,6 +23,7 @@ import org.springframework.beans.factory.BeanFactory;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.AutoConfigureAfter;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.expression.BeanFactoryResolver;
@@ -30,7 +31,9 @@ import org.springframework.expression.EvaluationContext;
 import org.springframework.expression.spel.support.StandardEvaluationContext;
 import org.springframework.modulith.events.EventExternalizationConfiguration;
 import org.springframework.modulith.events.ExternalizationMode;
+import org.springframework.modulith.events.OutboxEventScheduler;
 import org.springframework.modulith.events.config.EventExternalizationAutoConfiguration;
+import org.springframework.modulith.events.config.OutboxEventRecorderAutoConfiguration;
 
 /**
  * Auto-configuration to set up an {@link NamastackOutboxEventRecorder} to externalize events via the outbox.
@@ -41,18 +44,25 @@ import org.springframework.modulith.events.config.EventExternalizationAutoConfig
  * @author Roland Beisel
  * @since 2.1
  * @see ExternalizationMode#OUTBOX
+ * @deprecated since 2.2, for removal. Provide an {@link OutboxEventScheduler} bean through a Namastack-owned extension.
  */
+@Deprecated(since = "2.2", forRemoval = true)
 @AutoConfiguration
-@AutoConfigureAfter(EventExternalizationAutoConfiguration.class)
+@AutoConfigureAfter({ EventExternalizationAutoConfiguration.class, OutboxEventRecorderAutoConfiguration.class })
 @ConditionalOnProperty(name = ExternalizationMode.PROPERTY, havingValue = "outbox")
 @ConditionalOnProperty(name = "spring.modulith.events.externalization.enabled",
 		havingValue = "true",
 		matchIfMissing = true)
 @ConditionalOnBean(Outbox.class)
+@ConditionalOnMissingBean(OutboxEventScheduler.class)
 class NamastackOutboxEventRecorderAutoConfiguration {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(NamastackOutboxEventRecorderAutoConfiguration.class);
 
+	/**
+	 * @deprecated since 2.2, for removal. Provide an {@link OutboxEventScheduler} bean instead.
+	 */
+	@Deprecated(since = "2.2", forRemoval = true)
 	@Bean
 	NamastackOutboxEventRecorder outboxEventRecorder(EventExternalizationConfiguration configuration, Outbox outbox,
 			BeanFactory beanFactory) {

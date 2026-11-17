@@ -25,6 +25,11 @@ import org.jspecify.annotations.Nullable;
  * To provide atomic recording with the business operation, the storage must participate in the publisher's transaction.
  * Behavior outside a transaction is determined by the implementation. Mapping and transport routing are applied when
  * the recorded event is eventually externalized.
+ * <p>
+ * Registering this SPI replaces both the built-in outbox recorders and their vendor-specific delivery adapters.
+ * The extension must provide a delivery handler that invokes an {@code OutboxEventExternalizer} bean supplied by a
+ * broker module in {@link ExternalizationMode#OUTBOX} mode. The handler must propagate delivery failures so that the
+ * outbox implementation can retry.
  *
  * @author Roland Beisel
  * @since 2.2

@@ -28,6 +28,12 @@ import org.springframework.modulith.events.EventExternalizationConfiguration;
  * This handler is invoked by the outbox processor to externalize events that were previously recorded in the outbox
  * table. It uses the configured transport function to deliver events to their target destination (e.g., message broker,
  * email, SMS).
+ * <p>
+ * In outbox mode, the broker modules expose configured instances as Spring beans. Extensions providing an
+ * {@link org.springframework.modulith.events.OutboxEventScheduler} must invoke
+ * {@link #externalizeBlocking(Object)} from their own delivery handler and propagate failures to the outbox processor.
+ * When multiple broker modules are active, extensions must explicitly select the externalizer for the intended
+ * transport rather than relying on injection of a single instance.
  *
  * @author Roland Beisel
  * @author Oliver Drotbohm

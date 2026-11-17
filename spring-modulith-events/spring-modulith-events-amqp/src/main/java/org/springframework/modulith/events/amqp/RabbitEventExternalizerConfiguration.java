@@ -33,6 +33,7 @@ import org.springframework.beans.factory.BeanFactory;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.AutoConfigureAfter;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.expression.BeanFactoryResolver;
@@ -41,8 +42,10 @@ import org.springframework.expression.EvaluationContext;
 import org.springframework.expression.spel.support.StandardEvaluationContext;
 import org.springframework.modulith.events.EventExternalizationConfiguration;
 import org.springframework.modulith.events.ExternalizationMode;
+import org.springframework.modulith.events.OutboxEventScheduler;
 import org.springframework.modulith.events.RoutingTarget;
 import org.springframework.modulith.events.config.EventExternalizationAutoConfiguration;
+import org.springframework.modulith.events.config.OutboxEventRecorderAutoConfiguration;
 import org.springframework.modulith.events.jobrunr.JobRunrExternalizationTransport;
 import org.springframework.modulith.events.support.BrokerRouting;
 import org.springframework.modulith.events.support.EventExternalizationTransport;
@@ -58,7 +61,7 @@ import org.springframework.util.Assert;
  * @since 1.1
  */
 @AutoConfiguration
-@AutoConfigureAfter(EventExternalizationAutoConfiguration.class)
+@AutoConfigureAfter({ EventExternalizationAutoConfiguration.class, OutboxEventRecorderAutoConfiguration.class })
 @ConditionalOnClass(RabbitTemplate.class)
 @ConditionalOnProperty(name = "spring.modulith.events.externalization.enabled",
 		havingValue = "true",
@@ -104,6 +107,11 @@ class RabbitEventExternalizerConfiguration {
 			this.externalizer = factory.forTransport(createConfirmingRabbitTransport(configuration, operations));
 		}
 
+		@Bean
+		OutboxEventExternalizer rabbitOutboxEventExternalizer() {
+			return externalizer;
+		}
+
 		/**
 		 * @deprecated since 2.2, for removal. Delivery adapters belong to the Namastack-owned extension, which
 		 *             should invoke a configured {@link OutboxEventExternalizer}.
@@ -111,6 +119,7 @@ class RabbitEventExternalizerConfiguration {
 		@Deprecated(since = "2.2", forRemoval = true)
 		@AutoConfiguration
 		@ConditionalOnClass(OutboxHandler.class)
+		@ConditionalOnMissingBean(OutboxEventScheduler.class)
 		class NamastackOutboxAutoConfiguration {
 
 			/**
@@ -134,6 +143,7 @@ class RabbitEventExternalizerConfiguration {
 		@Deprecated(since = "2.2", forRemoval = true)
 		@AutoConfiguration
 		@ConditionalOnClass({ JobScheduler.class, JobRunrExternalizationTransport.class })
+		@ConditionalOnMissingBean(OutboxEventScheduler.class)
 		class JobRunrOutboxAutoConfiguration {
 
 			/**

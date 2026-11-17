@@ -25,15 +25,24 @@ import java.util.function.BiConsumer;
 import org.jmolecules.event.annotation.Externalized;
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
+import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.AutoConfigurations;
 import org.springframework.boot.test.context.FilteredClassLoader;
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;
+import org.springframework.context.annotation.Bean;
 import org.springframework.messaging.MessageChannel;
 import org.springframework.modulith.events.EventExternalizationConfiguration;
 import org.springframework.modulith.events.EventExternalized;
 import org.springframework.modulith.events.ExternalizationMode;
+import org.springframework.modulith.events.OutboxEventScheduler;
 import org.springframework.modulith.events.config.EventExternalizationAutoConfiguration;
+import org.springframework.modulith.events.config.OutboxEventRecorderAutoConfiguration;
 import org.springframework.modulith.events.jobrunr.JobRunrExternalizationTransport;
+import org.springframework.modulith.events.support.EventExternalizerModuleListener;
+import org.springframework.modulith.events.support.OutboxEventExternalizer;
+import org.springframework.modulith.events.support.OutboxEventRecorder;
 import org.springframework.modulith.test.PublishedEvents;
 import org.springframework.modulith.test.PublishedEventsFactory;
 
@@ -46,6 +55,67 @@ class SpringMessagingEventExternalizerConfigurationTests {
 
 	static final EventExternalizationConfiguration EXTERNALIZATION_ENABLED = EventExternalizationConfiguration
 			.defaults("org").build();
+
+	@ParameterizedTest
+	@ValueSource(strings = {
+			"spring.modulith.events.externalization.mode=module-listener",
+			"spring.modulith.events.externalization.enabled=false"
+	})
+	void doesNotExposeOutboxIntegrationWhenInactive(String property) {
+
+		basicSetup(EXTERNALIZATION_ENABLED)
+				.withConfiguration(AutoConfigurations.of(OutboxEventRecorderAutoConfiguration.class))
+				.withBean(OutboxEventScheduler.class, () -> mock(OutboxEventScheduler.class))
+				.withPropertyValues(ExternalizationMode.PROPERTY + "=" + ExternalizationMode.OUTBOX)
+				.withPropertyValues(property)
+				.run(ctxt -> {
+					assertThat(ctxt).doesNotHaveBean(OutboxEventExternalizer.class);
+					assertThat(ctxt).doesNotHaveBean(OutboxEventRecorder.class);
+					assertThat(ctxt).doesNotHaveBean(OutboxHandler.class);
+					assertThat(ctxt).doesNotHaveBean(JobRunrExternalizationTransport.class);
+				});
+	}
+
+	@ParameterizedTest
+	@ValueSource(booleans = { false, true })
+	void delegatesRecordingAndDeliveryToExtension(boolean withoutLegacyIntegrations) {
+
+		var runner = basicSetup(EXTERNALIZATION_ENABLED)
+				.withConfiguration(AutoConfigurations.of(SampleExtension.class, OutboxEventRecorderAutoConfiguration.class))
+				.withBean(PublishedEvents.class, PublishedEventsFactory::createPublishedEvents)
+				.withPropertyValues(ExternalizationMode.PROPERTY + "=" + ExternalizationMode.OUTBOX);
+
+		if (withoutLegacyIntegrations) {
+			runner = runner.withClassLoader(new FilteredClassLoader("io.namastack", "org.jobrunr",
+					"org.springframework.modulith.events.jobrunr"));
+		}
+
+		runner.run(ctxt -> {
+
+			assertThat(ctxt).hasSingleBean(OutboxEventExternalizer.class);
+			assertThat(ctxt).hasSingleBean(OutboxEventRecorder.class);
+			assertThat(ctxt).doesNotHaveBean(OutboxHandler.class);
+			assertThat(ctxt).doesNotHaveBean(JobRunrExternalizationTransport.class);
+			assertThat(ctxt).doesNotHaveBean(EventExternalizerModuleListener.class);
+
+			var event = new SampleEvent();
+			var operations = ctxt.getBean("sampleChannel", MessageChannel.class);
+			when(operations.send(any())).thenReturn(true);
+
+			ctxt.publishEvent(event);
+
+			var scheduler = ctxt.getBean(OutboxEventScheduler.class);
+			verify(scheduler).schedule(event, null);
+			verifyNoInteractions(operations);
+
+			ctxt.getBean(SampleDeliveryHandler.class).handle(event);
+
+			verify(operations).send(argThat(it -> it.getPayload() == event));
+			assertThat(ctxt.getBean(PublishedEvents.class).ofType(EventExternalized.class)
+					.matching(it -> it.getEvent().equals(event))).hasSize(1);
+			verifyNoMoreInteractions(scheduler, operations);
+		});
+	}
 
 	@Test // GH-1637
 	void configuresNamastackOutboxHandlerIfPresent() {
@@ -97,6 +167,27 @@ class SpringMessagingEventExternalizerConfigurationTests {
 	@Test // GH-1642
 	void publishesEventExternalizedAfterNamastackExternalization() {
 		assertEventExternalizedPublished(OutboxHandler.class, (transport, event) -> transport.handle(event, null));
+	}
+
+	@AutoConfiguration(before = OutboxEventRecorderAutoConfiguration.class)
+	static class SampleExtension {
+
+		@Bean
+		OutboxEventScheduler scheduler() {
+			return mock(OutboxEventScheduler.class);
+		}
+
+		@Bean
+		SampleDeliveryHandler deliveryHandler(OutboxEventExternalizer externalizer) {
+			return new SampleDeliveryHandler(externalizer);
+		}
+	}
+
+	record SampleDeliveryHandler(OutboxEventExternalizer externalizer) {
+
+		void handle(Object event) {
+			externalizer.externalizeBlocking(event);
+		}
 	}
 
 	private <T> void assertEventExternalizedPublished(Class<T> transportType, BiConsumer<T, Object> consumer) {

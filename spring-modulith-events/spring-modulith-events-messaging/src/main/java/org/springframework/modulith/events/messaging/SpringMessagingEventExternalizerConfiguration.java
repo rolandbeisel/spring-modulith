@@ -26,6 +26,7 @@ import org.springframework.beans.factory.BeanFactory;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.AutoConfigureAfter;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.expression.BeanFactoryResolver;
@@ -34,7 +35,9 @@ import org.springframework.messaging.MessageChannel;
 import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.modulith.events.EventExternalizationConfiguration;
 import org.springframework.modulith.events.ExternalizationMode;
+import org.springframework.modulith.events.OutboxEventScheduler;
 import org.springframework.modulith.events.config.EventExternalizationAutoConfiguration;
+import org.springframework.modulith.events.config.OutboxEventRecorderAutoConfiguration;
 import org.springframework.modulith.events.jobrunr.JobRunrExternalizationTransport;
 import org.springframework.modulith.events.support.BrokerRouting;
 import org.springframework.modulith.events.support.EventExternalizationTransport;
@@ -50,7 +53,7 @@ import org.springframework.modulith.events.support.OutboxEventExternalizerFactor
  * @author Oliver Drotbohm
  */
 @AutoConfiguration
-@AutoConfigureAfter(EventExternalizationAutoConfiguration.class)
+@AutoConfigureAfter({ EventExternalizationAutoConfiguration.class, OutboxEventRecorderAutoConfiguration.class })
 @ConditionalOnClass(MessageChannel.class)
 @ConditionalOnProperty(name = "spring.modulith.events.externalization.enabled", havingValue = "true",
 		matchIfMissing = true)
@@ -83,6 +86,11 @@ class SpringMessagingEventExternalizerConfiguration {
 			this.externalizer = factory.forTransport(createMessagingTransport(configuration, beanFactory));
 		}
 
+		@Bean
+		OutboxEventExternalizer springMessagingOutboxEventExternalizer() {
+			return externalizer;
+		}
+
 		/**
 		 * @deprecated since 2.2, for removal. Delivery adapters belong to the Namastack-owned extension, which
 		 *             should invoke a configured {@link OutboxEventExternalizer}.
@@ -90,6 +98,7 @@ class SpringMessagingEventExternalizerConfiguration {
 		@Deprecated(since = "2.2", forRemoval = true)
 		@AutoConfiguration
 		@ConditionalOnClass(OutboxHandler.class)
+		@ConditionalOnMissingBean(OutboxEventScheduler.class)
 		class NamastackOutboxAutoConfiguration {
 
 			/**
@@ -113,6 +122,7 @@ class SpringMessagingEventExternalizerConfiguration {
 		@Deprecated(since = "2.2", forRemoval = true)
 		@AutoConfiguration
 		@ConditionalOnClass({ JobScheduler.class, JobRunrExternalizationTransport.class })
+		@ConditionalOnMissingBean(OutboxEventScheduler.class)
 		class JobRunrOutboxAutoConfiguration {
 
 			/**

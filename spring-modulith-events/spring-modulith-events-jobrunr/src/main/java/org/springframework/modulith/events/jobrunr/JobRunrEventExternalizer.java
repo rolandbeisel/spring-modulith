@@ -30,10 +30,7 @@ import org.springframework.util.Assert;
  *
  * @author Oliver Drotbohm
  * @since 2.1
- * @deprecated since 2.2, for removal. Implement
- *             {@link org.springframework.modulith.events.OutboxEventScheduler} in a JobRunr-owned extension instead.
  */
-@Deprecated(since = "2.2", forRemoval = true)
 class JobRunrEventExternalizer
 		implements ApplicationListener<PayloadApplicationEvent<?>>, ConditionalEventListener {
 
@@ -48,11 +45,7 @@ class JobRunrEventExternalizer
 	 * @param scheduler must not be {@literal null}.
 	 * @param externalizers must not be {@literal null}.
 	 * @param configuration must not be {@literal null}.
-	 * @deprecated since 2.2, for removal. Use the generic
-	 *             {@link org.springframework.modulith.events.support.OutboxEventRecorder} with an
-	 *             {@link org.springframework.modulith.events.OutboxEventScheduler} instead.
 	 */
-	@Deprecated(since = "2.2", forRemoval = true)
 	JobRunrEventExternalizer(JobScheduler scheduler, List<JobRunrExternalizationTransport> externalizers,
 			EventExternalizationConfiguration configuration) {
 
@@ -65,22 +58,19 @@ class JobRunrEventExternalizer
 		this.configuration = configuration;
 	}
 
-	/**
-	 * @deprecated since 2.2, for removal. Event selection is performed by the generic outbox recorder.
+	/*
+	 * (non-Javadoc)
 	 * @see org.springframework.modulith.events.core.ConditionalEventListener#supports(java.lang.Object)
 	 */
-	@Deprecated(since = "2.2", forRemoval = true)
 	@Override
 	public boolean supports(Object event) {
 		return configuration.supports(event);
 	}
 
-	/**
-	 * @deprecated since 2.2, for removal. Scheduling is delegated to
-	 *             {@link org.springframework.modulith.events.OutboxEventScheduler} by the generic recorder.
+	/*
+	 * (non-Javadoc)
 	 * @see org.springframework.context.ApplicationListener#onApplicationEvent(org.springframework.context.ApplicationEvent)
 	 */
-	@Deprecated(since = "2.2", forRemoval = true)
 	@Override
 	@Transactional
 	public void onApplicationEvent(PayloadApplicationEvent<?> event) {

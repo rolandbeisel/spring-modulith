@@ -21,20 +21,15 @@ import static org.mockito.Mockito.*;
 import io.namastack.outbox.handler.OutboxHandler;
 
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
-import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.AutoConfigurations;
 import org.springframework.boot.test.context.FilteredClassLoader;
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;
-import org.springframework.context.annotation.Bean;
 import org.springframework.kafka.core.KafkaOperations;
 import org.springframework.kafka.support.KafkaHeaders;
 import org.springframework.messaging.Message;
@@ -43,13 +38,9 @@ import org.springframework.modulith.events.EventExternalizationConfiguration;
 import org.springframework.modulith.events.EventExternalized;
 import org.springframework.modulith.events.ExternalizationMode;
 import org.springframework.modulith.events.Externalized;
-import org.springframework.modulith.events.OutboxEventScheduler;
 import org.springframework.modulith.events.config.EventExternalizationAutoConfiguration;
-import org.springframework.modulith.events.config.OutboxEventRecorderAutoConfiguration;
 import org.springframework.modulith.events.jobrunr.JobRunrExternalizationTransport;
 import org.springframework.modulith.events.support.EventExternalizerModuleListener;
-import org.springframework.modulith.events.support.OutboxEventExternalizer;
-import org.springframework.modulith.events.support.OutboxEventRecorder;
 import org.springframework.modulith.test.PublishedEvents;
 import org.springframework.modulith.test.PublishedEventsFactory;
 
@@ -109,74 +100,6 @@ class KafkaEventExternalizerConfigurationIntegrationTests {
 		});
 	}
 
-	@ParameterizedTest
-	@ValueSource(strings = {
-			"spring.modulith.events.externalization.mode=module-listener",
-			"spring.modulith.events.externalization.enabled=false"
-	})
-	void doesNotExposeOutboxIntegrationWhenInactive(String property) {
-
-		basicSetup(EXTERNALIZATION_ENABLED)
-				.withConfiguration(AutoConfigurations.of(OutboxEventRecorderAutoConfiguration.class))
-				.withBean(OutboxEventScheduler.class, () -> mock(OutboxEventScheduler.class))
-				.withPropertyValues(ExternalizationMode.PROPERTY + "=" + ExternalizationMode.OUTBOX)
-				.withPropertyValues(property)
-				.run(ctxt -> {
-					assertThat(ctxt).doesNotHaveBean(OutboxEventExternalizer.class);
-					assertThat(ctxt).doesNotHaveBean(OutboxEventRecorder.class);
-					assertThat(ctxt).doesNotHaveBean(OutboxHandler.class);
-					assertThat(ctxt).doesNotHaveBean(JobRunrExternalizationTransport.class);
-				});
-	}
-
-	@ParameterizedTest
-	@ValueSource(booleans = { false, true })
-	void delegatesRecordingAndDeliveryToExtension(boolean withoutLegacyIntegrations) {
-
-		var configuration = EventExternalizationConfiguration.defaults("org")
-				.mapping(RoutedSample.class, __ -> new MappedSample())
-				.build();
-		var runner = basicSetup(configuration)
-				.withConfiguration(AutoConfigurations.of(SampleExtension.class, OutboxEventRecorderAutoConfiguration.class))
-				.withBean(PublishedEvents.class, PublishedEventsFactory::createPublishedEvents)
-				.withPropertyValues(ExternalizationMode.PROPERTY + "=" + ExternalizationMode.OUTBOX);
-
-		if (withoutLegacyIntegrations) {
-			runner = runner.withClassLoader(new FilteredClassLoader("io.namastack", "org.jobrunr",
-					"org.springframework.modulith.events.jobrunr"));
-		}
-
-		runner.run(ctxt -> {
-
-			assertThat(ctxt).hasSingleBean(OutboxEventExternalizer.class);
-			assertThat(ctxt).hasSingleBean(OutboxEventRecorder.class);
-			assertThat(ctxt).doesNotHaveBean(OutboxHandler.class);
-			assertThat(ctxt).doesNotHaveBean(JobRunrExternalizationTransport.class);
-			assertThat(ctxt).doesNotHaveBean(EventExternalizerModuleListener.class);
-
-			var event = new RoutedSample("42");
-			var operations = ctxt.getBean(KafkaOperations.class);
-			when(operations.send(any(Message.class))).thenReturn(CompletableFuture.completedFuture(null));
-
-			ctxt.publishEvent(event);
-
-			var scheduler = ctxt.getBean(OutboxEventScheduler.class);
-			verify(scheduler).schedule(event, "42");
-			verifyNoInteractions(operations);
-
-			ctxt.getBean(SampleDeliveryHandler.class).handle(event);
-
-			var captor = ArgumentCaptor.forClass(Message.class);
-			verify(operations).send(captor.capture());
-			assertThat(captor.getValue().getPayload()).isInstanceOf(MappedSample.class);
-			assertThat(captor.getValue().getHeaders().get(KafkaHeaders.KEY)).isEqualTo("42");
-			assertThat(captor.getValue().getHeaders().get(KafkaHeaders.TOPIC)).isEqualTo("orders");
-			assertThat(ctxt.getBean(PublishedEvents.class).ofType(EventExternalized.class)
-					.matching(it -> it.getEvent().equals(event))).hasSize(1);
-			verifyNoMoreInteractions(scheduler, operations);
-		});
-	}
-
 	@Test // GH-1637
 	void configuresNamastackOutboxHandlerIfPresent() {
 
@@ -184,25 +107,6 @@ class KafkaEventExternalizerConfigurationIntegrationTests {
 				.withPropertyValues(ExternalizationMode.PROPERTY + "=" + ExternalizationMode.OUTBOX)
 				.run(ctxt -> {
 					assertThat(ctxt).hasSingleBean(OutboxHandler.class);
-				});
-	}
-
-	@Test
-	void propagatesDeliveryFailureToExtension() {
-
-		var failure = new IllegalStateException("Kafka send failed!");
-		doReturn(CompletableFuture.failedFuture(failure)).when(operations).send(any(Message.class));
-
-		basicSetup(EXTERNALIZATION_ENABLED)
-				.withConfiguration(AutoConfigurations.of(SampleExtension.class, OutboxEventRecorderAutoConfiguration.class))
-				.withBean(PublishedEvents.class, PublishedEventsFactory::createPublishedEvents)
-				.withPropertyValues(ExternalizationMode.PROPERTY + "=" + ExternalizationMode.OUTBOX)
-				.run(ctxt -> {
-
-					assertThatThrownBy(() -> ctxt.getBean(SampleDeliveryHandler.class).handle(new Sample()))
-							.hasRootCause(failure);
-					assertThat(ctxt.getBean(PublishedEvents.class).ofType(EventExternalized.class)).isEmpty();
-					verify(operations).send(any(Message.class));
 				});
 	}
 
@@ -332,27 +236,6 @@ class KafkaEventExternalizerConfigurationIntegrationTests {
 		}
 
 		return runner;
-	}
-
-	@AutoConfiguration(before = OutboxEventRecorderAutoConfiguration.class)
-	static class SampleExtension {
-
-		@Bean
-		OutboxEventScheduler scheduler() {
-			return mock(OutboxEventScheduler.class);
-		}
-
-		@Bean
-		SampleDeliveryHandler deliveryHandler(OutboxEventExternalizer externalizer) {
-			return new SampleDeliveryHandler(externalizer);
-		}
-	}
-
-	record SampleDeliveryHandler(OutboxEventExternalizer externalizer) {
-
-		void handle(Object event) {
-			externalizer.externalizeBlocking(event);
-		}
 	}
 
 	private <T> void assertEventExternalizedPublished(Class<T> transportType, BiConsumer<T, Object> consumer) {

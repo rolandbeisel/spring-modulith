@@ -8,8 +8,7 @@
 	</parent>
 
 	<artifactId>spring-modulith-starter-namastack</artifactId>
-	<name>Spring Modulith - Starters - Starter Namastack (JDBC) (Deprecated)</name>
-	<description>Deprecated since 2.2, for future removal. Legacy Namastack integration retained for compatibility. Integrations should be provided by external extensions using OutboxEventScheduler and OutboxEventExternalizer.</description>
+	<name>Spring Modulith - Starters - Starter Namastack (JDBC)</name>
 
 	<properties>
 		<module.name>spring.modulith.starter.namastack</module.name>

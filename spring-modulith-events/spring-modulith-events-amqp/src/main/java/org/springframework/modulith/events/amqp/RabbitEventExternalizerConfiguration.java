@@ -112,21 +112,11 @@ class RabbitEventExternalizerConfiguration {
 			return externalizer;
 		}
 
-		/**
-		 * @deprecated since 2.2, for removal. Delivery adapters belong to the Namastack-owned extension, which
-		 *             should invoke a configured {@link OutboxEventExternalizer}.
-		 */
-		@Deprecated(since = "2.2", forRemoval = true)
 		@AutoConfiguration
 		@ConditionalOnClass(OutboxHandler.class)
 		@ConditionalOnMissingBean(OutboxEventScheduler.class)
 		class NamastackOutboxAutoConfiguration {
 
-			/**
-			 * @deprecated since 2.2, for removal. Use a Namastack-owned delivery adapter invoking
-			 *             {@link OutboxEventExternalizer#externalizeBlocking(Object)}.
-			 */
-			@Deprecated(since = "2.2", forRemoval = true)
 			@Bean
 			OutboxHandler namastackRabbitOutboxExternalizer() {
 
@@ -136,21 +126,11 @@ class RabbitEventExternalizerConfiguration {
 			}
 		}
 
-		/**
-		 * @deprecated since 2.2, for removal. Delivery adapters belong to the JobRunr-owned extension, which
-		 *             should invoke a configured {@link OutboxEventExternalizer}.
-		 */
-		@Deprecated(since = "2.2", forRemoval = true)
 		@AutoConfiguration
 		@ConditionalOnClass({ JobScheduler.class, JobRunrExternalizationTransport.class })
 		@ConditionalOnMissingBean(OutboxEventScheduler.class)
 		class JobRunrOutboxAutoConfiguration {
 
-			/**
-			 * @deprecated since 2.2, for removal. Use a JobRunr-owned delivery adapter invoking
-			 *             {@link OutboxEventExternalizer#externalizeBlocking(Object)}.
-			 */
-			@Deprecated(since = "2.2", forRemoval = true)
 			@Bean
 			JobRunrExternalizationTransport jobRunrRabbitOutboxExternalizer() {
 

@@ -35,10 +35,7 @@ import org.springframework.util.ClassUtils;
  *
  * @author Roland Beisel
  * @since 2.1
- * @deprecated since 2.2, for removal. Provider dependency validation belongs to the extension implementing
- *             {@link OutboxEventScheduler}.
  */
-@Deprecated(since = "2.2", forRemoval = true)
 @AutoConfiguration
 @AutoConfigureAfter(OutboxEventRecorderAutoConfiguration.class)
 @AutoConfigureBefore(NamastackOutboxEventRecorderAutoConfiguration.class)
@@ -48,10 +45,6 @@ class NamastackOutboxModeValidationConfiguration implements InitializingBean {
 
 	private static final String OUTBOX_CLASS = "io.namastack.outbox.Outbox";
 
-	/**
-	 * @deprecated since 2.2, for removal. Provider dependency validation belongs to the Namastack-owned extension.
-	 */
-	@Deprecated(since = "2.2", forRemoval = true)
 	@Override
 	public void afterPropertiesSet() {
 

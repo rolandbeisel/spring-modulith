@@ -44,9 +44,7 @@ import org.springframework.modulith.events.config.OutboxEventRecorderAutoConfigu
  * @author Roland Beisel
  * @since 2.1
  * @see ExternalizationMode#OUTBOX
- * @deprecated since 2.2, for removal. Provide an {@link OutboxEventScheduler} bean through a Namastack-owned extension.
  */
-@Deprecated(since = "2.2", forRemoval = true)
 @AutoConfiguration
 @AutoConfigureAfter({ EventExternalizationAutoConfiguration.class, OutboxEventRecorderAutoConfiguration.class })
 @ConditionalOnProperty(name = ExternalizationMode.PROPERTY, havingValue = "outbox")
@@ -59,10 +57,6 @@ class NamastackOutboxEventRecorderAutoConfiguration {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(NamastackOutboxEventRecorderAutoConfiguration.class);
 
-	/**
-	 * @deprecated since 2.2, for removal. Provide an {@link OutboxEventScheduler} bean instead.
-	 */
-	@Deprecated(since = "2.2", forRemoval = true)
 	@Bean
 	NamastackOutboxEventRecorder outboxEventRecorder(EventExternalizationConfiguration configuration, Outbox outbox,
 			BeanFactory beanFactory) {

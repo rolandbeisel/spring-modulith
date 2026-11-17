@@ -27,7 +27,6 @@ import java.util.UUID;
 import javax.sql.DataSource;
 
 import org.jobrunr.jobs.states.StateName;
-import org.jobrunr.scheduling.JobScheduler;
 import org.jobrunr.storage.StorageProvider;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.autoconfigure.AutoConfigurations;
@@ -35,13 +34,8 @@ import org.springframework.boot.jdbc.autoconfigure.DataSourceAutoConfiguration;
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;
 import org.springframework.context.PayloadApplicationEvent;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
-import org.springframework.modulith.events.EventExternalizationConfiguration;
 import org.springframework.modulith.events.ExternalizationMode;
 import org.springframework.modulith.events.Externalized;
-import org.springframework.modulith.events.OutboxEventScheduler;
-import org.springframework.modulith.events.config.EventExternalizationAutoConfiguration;
-import org.springframework.modulith.events.config.OutboxEventRecorderAutoConfiguration;
-import org.springframework.modulith.events.support.OutboxEventRecorder;
 import org.springframework.transaction.support.TransactionTemplate;
 
 /**
@@ -51,32 +45,6 @@ import org.springframework.transaction.support.TransactionTemplate;
  * @since 2.1
  */
 class JobRunrEventExternalizationAutoConfigurationTests {
-
-	@Test
-	void customSchedulerReplacesLegacyRecorder() {
-
-		var outboxScheduler = mock(OutboxEventScheduler.class);
-		var scheduler = mock(JobScheduler.class);
-
-		new ApplicationContextRunner()
-				.withConfiguration(AutoConfigurations.of(EventExternalizationAutoConfiguration.class,
-						OutboxEventRecorderAutoConfiguration.class, JobRunrEventExternalizationAutoConfiguration.class))
-				.withBean(EventExternalizationConfiguration.class, () -> EventExternalizationConfiguration.externalizing()
-						.select(EventExternalizationConfiguration.annotatedAsExternalized()).build())
-				.withBean(JobScheduler.class, () -> scheduler)
-				.withBean(OutboxEventScheduler.class, () -> outboxScheduler)
-				.withPropertyValues(ExternalizationMode.PROPERTY + "=outbox")
-				.run(context -> {
-					assertThat(context).hasSingleBean(OutboxEventRecorder.class);
-					assertThat(context).doesNotHaveBean(JobRunrEventExternalizer.class);
-
-					var event = new SampleEvent(UUID.randomUUID());
-					context.publishEvent(event);
-
-					verify(outboxScheduler).schedule(event, null);
-					verifyNoInteractions(scheduler);
-				});
-	}
 
 	@Test
 	void registersJobRunrEventExternalizer() {

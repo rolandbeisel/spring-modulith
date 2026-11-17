@@ -30,16 +30,13 @@ import org.springframework.util.ClassUtils;
  * @author Oliver Drotbohm
  * @soundtrack Ed Sheeran - Drive (https://www.youtube.com/watch?v=yfANlm8mhwM)
  * @since 2.1
- * @deprecated since 2.2, for removal. Multicaster compatibility must be provided by the Namastack-owned extension.
  */
-@Deprecated(since = "2.2", forRemoval = true)
 class NamastackOutboxMulticasterDisabler implements EnvironmentPostProcessor {
 
-	/**
-	 * @deprecated since 2.2, for removal. Multicaster compatibility belongs to the Namastack-owned extension.
+	/*
+	 * (non-Javadoc)
 	 * @see org.springframework.boot.EnvironmentPostProcessor#postProcessEnvironment(org.springframework.core.env.ConfigurableEnvironment, org.springframework.boot.SpringApplication)
 	 */
-	@Deprecated(since = "2.2", forRemoval = true)
 	@Override
 	public void postProcessEnvironment(ConfigurableEnvironment environment, SpringApplication application) {
 

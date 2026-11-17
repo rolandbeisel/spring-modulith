@@ -8,8 +8,7 @@
 	</parent>
 	
 	<artifactId>spring-modulith-starter-jobrunr</artifactId>
-	<name>Spring Modulith - Starters - Starter JobRunr (Deprecated)</name>
-	<description>Deprecated since 2.2, for future removal. Legacy JobRunr integration retained for compatibility. Integrations should be provided by external extensions using OutboxEventScheduler and OutboxEventExternalizer.</description>
+	<name>Spring Modulith - Starters - Starter JobRunr</name>
 	
 	<properties>
 		<module.name>spring.modulith.starter.jobrunr</module.name>

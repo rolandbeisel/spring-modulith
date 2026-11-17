@@ -35,9 +35,7 @@ import org.springframework.modulith.events.config.OutboxEventRecorderAutoConfigu
  *
  * @author Oliver Drotbohm
  * @since 2.1
- * @deprecated since 2.2, for removal. Provide an {@link OutboxEventScheduler} bean through a JobRunr-owned extension.
  */
-@Deprecated(since = "2.2", forRemoval = true)
 @AutoConfiguration
 @AutoConfigureAfter({ EventExternalizationAutoConfiguration.class, OutboxEventRecorderAutoConfiguration.class })
 @ConditionalOnProperty(name = ExternalizationMode.PROPERTY, havingValue = "outbox")
@@ -48,10 +46,6 @@ import org.springframework.modulith.events.config.OutboxEventRecorderAutoConfigu
 @ConditionalOnMissingBean(OutboxEventScheduler.class)
 class JobRunrEventExternalizationAutoConfiguration {
 
-	/**
-	 * @deprecated since 2.2, for removal. Provide an {@link OutboxEventScheduler} bean instead.
-	 */
-	@Deprecated(since = "2.2", forRemoval = true)
 	@Bean
 	JobRunrEventExternalizer jobRunrEventExternalizer(JobScheduler scheduler,
 			List<JobRunrExternalizationTransport> transports, EventExternalizationConfiguration configuration) {

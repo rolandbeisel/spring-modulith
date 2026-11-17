@@ -15,24 +15,13 @@
  */
 package org.springframework.modulith.events.jobrunr;
 
-import org.springframework.modulith.events.support.OutboxEventExternalizer;
-
 /**
  * SPI for broker implementations to eventually externalize a given event.
  *
  * @author Oliver Drotbohm
  * @since 2.1
- * @deprecated since 2.2, for removal. JobRunr-owned extensions should invoke {@link OutboxEventExternalizer} directly.
  */
-@Deprecated(since = "2.2", forRemoval = true)
 public interface JobRunrExternalizationTransport {
 
-	/**
-	 * Externalizes the given event.
-	 *
-	 * @param event must not be {@literal null}.
-	 * @deprecated since 2.2, for removal. Use {@link OutboxEventExternalizer#externalizeBlocking(Object)} instead.
-	 */
-	@Deprecated(since = "2.2", forRemoval = true)
 	void externalize(Object event);
 }
